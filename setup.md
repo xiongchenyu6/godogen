@@ -89,6 +89,21 @@ In a published game repo, the same asset-generation requirements file lives at:
 
 `google-genai` is required by `asset_gen.py` for Gemini image generation.
 
+### Optional local asset backend
+
+The self-hosted routes require a usable SSH identity and a reachable loopback-only
+ComfyUI service. Verify both before treating a local route as available:
+
+```bash
+ssh -o BatchMode=yes -o ConnectTimeout=10 root@101.78.126.6 true
+python3 asset-gen/tools/comfyui_gen.py doctor
+```
+
+An ssh-agent signature refusal or a non-zero doctor result means the local backend
+is not ready from this workstation. Use `doctor --capability image` with either
+`--style production` or `--style pixel`, or use `doctor --capability h3` for a
+model-specific inventory gate.
+
 ## Godot (.NET edition)
 
 The **.NET edition** is required for Godot projects. The standard Godot build cannot run C# scripts.

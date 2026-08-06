@@ -26,7 +26,7 @@ Engine and host agent (Claude vs Codex) are publish-time render choices, not sep
 - **Godot 4** — C#/.NET projects with build-time scene generation, runtime scripts, and Jolt physics.
 - **Bevy** — Rust/Bevy projects with code-first ECS scenes and offscreen capture.
 - **Babylon.js** — TypeScript/Vite browser games served at a live URL.
-- **Asset generation** — Gemini for precise references and characters, xAI Grok for textures and simple objects, Tripo3D for image-to-3D and rigged biped animation; animated sprites via Grok video with loop detection and background removal.
+- **Asset generation** — the latest-only local set uses FLUX.2 Klein 4B Base for images/edits, distilled 4B plus a pixel LoRA for sprites, and license-gated MiniMax H3 for video. Pixal3D, SkinTokens, and MOSS are the local PBR 3D, rigging, SFX, and TTS deployment targets. Gemini, Grok, and Tripo3D remain the cloud routes while a local capability is not live-verified.
 - **Proof over claims** — the agent judges results from the running game (a live URL or a recorded clip), not from a clean compile, so visible defects drive the next iteration.
 - **You choose your involvement** — watch the live game (a Babylon.js URL, or a Godot/Bevy project you run) and steer at decision points, or leave the run unattended and get a 15–20s proof recording at the end. The agent takes its cue from how you frame the task.
 
@@ -43,6 +43,7 @@ Engine and host agent (Claude vs Codex) are publish-time render choices, not sep
   - `GOOGLE_API_KEY` — [Google AI Studio](https://aistudio.google.com/) for Gemini image generation
   - `XAI_API_KEY` — [xAI Grok](https://console.x.ai/home) for image/video generation
   - `TRIPO3D_API_KEY` — [Tripo3D](https://platform.tripo3d.ai/) for 3D generation
+- SSH access to the configured GPU box for optional local generation; `asset-gen/comfyui.md` records live-stack checks and model-license boundaries
 - System packages from [setup.md](setup.md): `vulkan-tools`, `xvfb`, `ffmpeg`, `imagemagick`, plus platform-specific extras
 - Tested on Ubuntu, Debian, and macOS
 - Claude Code or Codex

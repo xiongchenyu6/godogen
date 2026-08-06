@@ -309,7 +309,7 @@ def main():
 
     # QA preview: composite on contrasting solid bg for visual inspection
     if args.preview:
-        preview_path = make_qa_preview(out, output_path, bg_color)
+        preview_path = make_qa_preview(out, output_path, sample_bg_color(img))
         print(f"  QA preview: {preview_path}")
 
 

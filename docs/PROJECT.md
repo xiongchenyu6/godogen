@@ -45,10 +45,10 @@ The manifest states only this intent; everything about *how to show and capture*
 
 **Trust the model.** The runtime ships no scaffold and no planner. The model recreates boilerplate from a short sketch and decomposes the work itself; the guides spend their words only on what it genuinely can't know.
 
-**Cost-aware asset generation.** Gemini, Grok, and Tripo3D are used where they make economic sense — the agent confirms costs with the user before generating, and the asset manifest in `README.md` tracks paths, in-game sizes, and costs so implementation doesn't lose them.
+**Cost- and license-aware asset generation.** Permissive local models are preferred when the configured GPU backend is ready; restricted local weights stay opt-in, and Gemini, Grok, or Tripo3D cover precision and capabilities the verified local stack does not. The asset manifest in `README.md` tracks paths, in-game sizes, and paid costs so implementation doesn't lose them.
 
 **One source, many targets.** Engine and host agent are render-time choices over one source tree.
 
 ## Runtime Limitations
 
-The runtime does not ship a dedicated audio pipeline or mobile/native packaging.
+The runtime does not yet ship a dedicated audio-asset pipeline or mobile/native packaging. Video backends may emit synchronized audio inside their clips.

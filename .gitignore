@@ -4,5 +4,8 @@
 .playwright-cli/
 .playwright
 **/__pycache__
+.direnv/
+shared/
+bevy/skills/bevy-help/docs/
 godot/skills/godot-api/doc_api/
 godot/skills/godot-api/doc_source/
