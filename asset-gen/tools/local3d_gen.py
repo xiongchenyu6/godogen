@@ -33,9 +33,10 @@ from pathlib import Path
 # loopback-only on the remote, so we reach it through an SSH tunnel.
 SSH_HOST = "root@101.78.126.6"
 # Nginx balances the workers; each worker also answers directly, which is the
-# only way to prove that they hold different GPUs.
-REMOTE_API_PORT = 8080
-REMOTE_WORKER_PORT_BASE = 8000
+# only way to prove that they hold different GPUs. Ports match
+# services.trellis2 on the box — 8080 there belongs to the voice gateway.
+REMOTE_API_PORT = 8090
+REMOTE_WORKER_PORT_BASE = 8091
 
 MODEL = "trellis2-4b"
 MAX_IMAGE_BYTES = 30 * 1024 * 1024

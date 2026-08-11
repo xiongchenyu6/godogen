@@ -1,9 +1,9 @@
 # Local Image-to-3D (TRELLIS.2)
 
 [TRELLIS.2](https://github.com/microsoft/TRELLIS.2) (MIT, `microsoft/TRELLIS.2-4B`)
-is the local PBR image-to-3D line. It is a **deployment target** — the GPU box
-serves ComfyUI today, and `/opt/ai3d` does not exist yet. Until `doctor` passes,
-3D goes to Tripo3D in `SKILL.md`.
+is the local PBR image-to-3D line. It is a **deployment target** — the service is
+declared but not switched on. Until `doctor` passes, 3D goes to Tripo3D in
+`SKILL.md`.
 
 It supersedes Pixal3D as the local 3D route: Pixal3D wraps this same TRELLIS.2
 base and pulls in a DINOv3 runtime dependency with its own license terms, so the
@@ -11,13 +11,20 @@ upstream model is the shorter path to a textured GLB.
 
 ## Service contract
 
-One worker per RTX 4090, each pinned with `CUDA_VISIBLE_DEVICES`, behind an
-Nginx `least_conn` balancer on the remote loopback:
+One worker per RTX 4090, each pinned to its card by GPU **UUID** (indices drift
+when the driver re-enumerates), behind an Nginx `least_conn` balancer on the
+remote loopback:
 
 ```text
-tools/local3d_gen.py ──SSH tunnel──> nginx :8080 ─┬─ worker :8000 ── GPU 0
-                                                  └─ worker :8001 ── GPU 1
+tools/local3d_gen.py ──SSH tunnel──> nginx :8090 ─┬─ worker :8091 ── GPU 0
+                                                  └─ worker :8092 ── GPU 1
 ```
+
+The box is NixOS, so this is a `services.trellis2` module rather than a conda
+prefix: the model, the five CUDA extensions it imports (`o_voxel`, `cumesh`,
+`flex_gemm`, `nvdiffrast`, `nvdiffrec` renderutils), and the HTTP server are one
+pinned Python environment. Port 8090 rather than the upstream 8080 — that one
+belongs to another service on this host.
 
 Two 24 GB cards are not one 48 GB card. TRELLIS.2 needs 24 GB, so a single card
 holds exactly one job — the second GPU doubles throughput, not per-asset speed.
@@ -79,16 +86,15 @@ mesh; the GLB is a starting asset, not a shipping one.
 
 ## Deployment notes
 
-The GPU box runs NixOS, so the upstream Ubuntu/Conda install path does not apply
-as written — TRELLIS.2 compiles CUDA extensions (FlashAttention, nvdiffrast,
-`o_voxel`, FlexGemm) against CUDA 12.4 with `TORCH_CUDA_ARCH_LIST=8.9`, which
-needs either a Nix-packaged toolchain or a container. Do not mix Nix, system
-Python, and Conda CUDA packages in one environment.
+The service shares the box with ComfyUI, which claims both cards and needs all
+24 GB for MiniMax H3. A TRELLIS.2 worker resident-loads its model and never
+gives the memory back, so running both at once is an OOM rather than a slowdown.
+That is why the service ships disabled: enabling it means either scheduling the
+two against each other or giving each one card.
 
 The API carries no authentication. Keep it on the loopback behind the SSH tunnel;
 if it is ever bound to a routable address, it needs TLS and at least a bearer
-token in front of it. Outputs accumulate — expire the output directory on a
-schedule.
+token in front of it. Outputs are pruned on a daily timer.
 
 TRELLIS.2 and the TripoSG/TripoSR fallbacks are MIT-licensed, which does not
 clear the input images, so generated characters and branded shapes still need
