@@ -17,7 +17,7 @@ Local routes run on a self-hosted GPU box. Read `${ASSET_GEN_SKILL_DIR}/comfyui.
 | Game asset | Route |
 |------------|-------|
 | General 2D, icons, props, textures, instruction edits | Local FLUX.2 Base: `comfyui_gen.py image --style production`; Gemini/Grok below when the local gate is closed |
-| Pixel sprites | Local FLUX.2 distilled + pixel LoRA: `comfyui_gen.py image --style pixel`; matte after inspection |
+| Pixel sprites | Local FLUX.2 Base + pixel LoRA: `comfyui_gen.py image --style pixel`; matte after inspection |
 | Video and animated-sprite source | MiniMax H3 only when license-eligible and locally verified; Grok video below otherwise |
 | Static textured/PBR GLB | Local TRELLIS.2: `local3d_gen.py glb`; Tripo3D `glb` below when its gate is closed |
 | Rigged or animated GLB | Tripo3D `rig`/`retarget` below — no local route produces skeletons or clips |

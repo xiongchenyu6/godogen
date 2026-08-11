@@ -16,7 +16,7 @@ short-lived SSH tunnel to loopback-only ComfyUI and return the exact model in JS
 | Game asset | Model | Output | License | Repository integration |
 |------------|-------|--------|---------|------------------------|
 | General 2D, props, textures, instruction edits | [FLUX.2 Klein Base 4B](https://huggingface.co/black-forest-labs/FLUX.2-klein-base-4B) | PNG | Apache-2.0 | `comfyui_gen.py image --style production` |
-| Pixel sprites | [FLUX.2 Klein 4B](https://huggingface.co/black-forest-labs/FLUX.2-klein-4B) distilled + [pixel-art LoRA](https://huggingface.co/Limbicnation/pixel-art-lora) | PNG | Apache-2.0 | `comfyui_gen.py image --style pixel` |
+| Pixel sprites | FLUX.2 Klein Base 4B + [pixel-art LoRA](https://huggingface.co/Limbicnation/pixel-art-lora) | PNG | Apache-2.0 | `comfyui_gen.py image --style pixel` |
 | Video, action footage, synchronized dialogue/SFX/music | [MiniMax H3 Base FL2VA](https://huggingface.co/MiniMaxAI/MiniMax-H3) | MP4, 24 fps + 32 kHz stereo | restricted H3 community license | `comfyui_gen.py video`; explicit acceptance required |
 | PBR image-to-3D | [TRELLIS.2 4B](https://github.com/microsoft/TRELLIS.2) | textured GLB | MIT | `local3d_gen.py glb`; separate service, see `local3d.md` |
 | Skeleton and skin weights | [SkinTokens / TokenRig](https://github.com/VAST-AI-Research/SkinTokens) | rigged GLB | MIT project | deployment target; no animation clips |
@@ -45,17 +45,23 @@ inspected, and loaded through the target engine's runtime asset path.
 
 ## FLUX.2 4B images
 
-Production uses the undistilled Base checkpoint at 50 steps and guidance 4. Pixel uses
-the distilled checkpoint with its matching LoRA at 4 steps and CFG 1. Both are
-Apache-2.0; the pixel LoRA is not compatible with the Base checkpoint.
+Both styles run on the same undistilled Base 4B checkpoint: production at 50 steps
+and guidance 4, pixel with the LoRA at 20 steps and guidance 3.5. No distilled
+checkpoint is deployed — the 4-step/CFG-1 recipe belongs to a distilled model and
+washes the Base weights out.
 
 ```text
 models/diffusion_models/flux-2-klein-base-4b-fp8.safetensors
-models/diffusion_models/flux-2-klein-4b-fp8.safetensors
-models/text_encoders/qwen_3_4b.safetensors
+models/text_encoders/qwen_3_4b_fp4_flux2.safetensors
 models/vae/flux2-vae.safetensors
-models/loras/pixel-art/pytorch_lora_weights.comfyui.safetensors
+models/loras/pixel-art-flux2-klein.safetensors
 ```
+
+The pixel LoRA ships in diffusers key naming. ComfyUI maps 166 of its 172 tensors
+onto the Base weights and logs `lora key not loaded` for the six modulation
+tensors it cannot place; the style still applies. Treat that specific warning as
+expected, and any larger count as a real mismatch — check
+`journalctl -u comfyui | grep "lora key not loaded"` when a LoRA looks inert.
 
 ```bash
 # general game art
@@ -116,6 +122,13 @@ python3 ${ASSET_GEN_SKILL_DIR}/tools/comfyui_gen.py video \
 Explicit dimensions must be multiples of 32 and remain within the Base pixel
 budget. Confirm both video and stereo audio with `ffprobe`. Official workflow:
 [ComfyUI H3 guide](https://docs.comfy.org/tutorials/video/minimax/minimax-h3).
+
+H3 re-authors the frame it is given. Feeding it a sprite on a solid background
+returns the character acting correctly inside an invented scene, with the flat
+background filled in and pixel-art quantization smoothed into painterly shading.
+For sprite work that means the matte step is mandatory rather than optional, and
+a pixel style does not survive the round trip — animate at the art style you can
+matte, or keep sprite animation on the frame-by-frame image route.
 
 ## Game-ready post-processing
 

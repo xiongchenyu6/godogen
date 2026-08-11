@@ -29,6 +29,17 @@
         {
           devShells.default =
             with pkgs;
+            let
+              # asset-gen's local routes (comfyui_gen.py, local3d_gen.py) reach the
+              # GPU box over SSH with the standard library alone; Pillow is what
+              # they need on top of it, and numpy backs the frame tools. The paid
+              # cloud SDKs and rembg stay on pip — they are not in nixpkgs.
+              assetGenPython = python3.withPackages (ps: [
+                ps.pillow
+                ps.numpy
+                ps.requests
+              ]);
+            in
             mkShell.override { stdenv = pkgs.clangStdenv; } {
               RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
               RUST_BACKTRACE = 1;
@@ -57,6 +68,9 @@
                 clippy
                 openssl
                 rustfmt
+                assetGenPython
+                ffmpeg
+                imagemagick
               ];
 
               LD_LIBRARY_PATH = lib.makeLibraryPath [

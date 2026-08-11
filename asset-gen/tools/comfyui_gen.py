@@ -40,7 +40,7 @@ IMAGE_PROFILES = {
     "production": {
         "name": "flux2-klein-base-4b",
         "unet": ["flux-2-klein-base-4b-fp8.safetensors"],
-        "clip": ["qwen_3_4b.safetensors"],
+        "clip": ["qwen_3_4b.safetensors", "qwen_3_4b_fp4_flux2.safetensors"],
         "vae": ["flux2-vae.safetensors"],
         "default_size": 1024,
         "default_steps": 50,
@@ -48,14 +48,16 @@ IMAGE_PROFILES = {
         "supports_edit": True,
     },
     "pixel": {
-        "name": "flux2-klein-4b-pixel-lora",
-        "unet": ["flux-2-klein-4b-fp8.safetensors"],
-        "clip": ["qwen_3_4b.safetensors"],
+        "name": "flux2-klein-base-4b-pixel-lora",
+        "unet": ["flux-2-klein-base-4b-fp8.safetensors"],
+        "clip": ["qwen_3_4b.safetensors", "qwen_3_4b_fp4_flux2.safetensors"],
         "vae": ["flux2-vae.safetensors"],
-        "lora": ["pytorch_lora_weights.comfyui.safetensors"],
+        "lora": ["pixel-art-flux2-klein.safetensors",
+                 "pytorch_lora_weights.comfyui.safetensors"],
         "default_size": 512,
-        "default_steps": 4,
-        "default_guidance": 1.0,
+        # Base is undistilled, so the LoRA needs a real step count and CFG.
+        "default_steps": 20,
+        "default_guidance": 3.5,
         "supports_edit": False,
     },
 }
