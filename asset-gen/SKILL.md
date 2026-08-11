@@ -12,14 +12,15 @@ description: |
 
 Tools live at `${ASSET_GEN_SKILL_DIR}/tools/`; run them from the project root and keep runtime-loaded outputs under `${RUNTIME_ASSET_DIR}/`.
 
-Local routes run on a self-hosted GPU box. Read `${ASSET_GEN_SKILL_DIR}/comfyui.md` for the latest-only model set, inventory gates, and licenses. Use a local route only after its doctor check and a real output smoke test pass; otherwise use the cloud route in this page.
+Local routes run on a self-hosted GPU box. Read `${ASSET_GEN_SKILL_DIR}/comfyui.md` for the latest-only model set, inventory gates, and licenses, and `${ASSET_GEN_SKILL_DIR}/local3d.md` for the image-to-3D service. Use a local route only after its doctor check and a real output smoke test pass; otherwise use the cloud route in this page.
 
 | Game asset | Route |
 |------------|-------|
 | General 2D, icons, props, textures, instruction edits | Local FLUX.2 Base: `comfyui_gen.py image --style production`; Gemini/Grok below when the local gate is closed |
 | Pixel sprites | Local FLUX.2 distilled + pixel LoRA: `comfyui_gen.py image --style pixel`; matte after inspection |
 | Video and animated-sprite source | MiniMax H3 only when license-eligible and locally verified; Grok video below otherwise |
-| Textured/PBR or animated GLB | Tripo3D commands below; Pixal3D/SkinTokens deployment targets are documented in `comfyui.md` |
+| Static textured/PBR GLB | Local TRELLIS.2: `local3d_gen.py glb`; Tripo3D `glb` below when its gate is closed |
+| Rigged or animated GLB | Tripo3D `rig`/`retarget` below — no local route produces skeletons or clips |
 | Sound effects and dialogue | MOSS deployment targets are documented in `comfyui.md`; no local runtime command until verified |
 
 ## Paid image models
@@ -65,7 +66,15 @@ Reuse one reference for all of a character's actions. **Chaining** (feed action 
 
 ## 3D models
 
-The verified textured, rigged, and retargeted route is Tripo3D:
+A free local GLB is one command once its gate passes — read `${ASSET_GEN_SKILL_DIR}/local3d.md`:
+
+```bash
+python3 ${ASSET_GEN_SKILL_DIR}/tools/local3d_gen.py doctor
+python3 ${ASSET_GEN_SKILL_DIR}/tools/local3d_gen.py glb \
+  --image ref.png --preset prop -o model.glb
+```
+
+It produces geometry and PBR textures only. Rigs, skin weights, and animation clips have no local route:
 
 ```bash
 python3 ${ASSET_GEN_SKILL_DIR}/tools/asset_gen.py glb  --image ref.png -o model.glb     # 30¢ default / 60¢ --quality hd
@@ -101,7 +110,7 @@ victory_celebration volleyball wait walk warm_up wave_goodbye_01/02
 
 ## Costs
 
-Each generation costs real money, so confirm with the user before generating. Quick reference: texture/simple sprite (Grok) 2¢ · character/ref (Gemini 1K) 7¢ · background 2¢ (Grok) or 10¢ (Gemini 2K) · full 3D asset 37¢ (7¢ image + 30¢ GLB) · rigged character walk/idle/attack ≈ 92¢.
+Local routes are free; every command in this page costs real money, so confirm with the user before generating. Quick reference: texture/simple sprite (Grok) 2¢ · character/ref (Gemini 1K) 7¢ · background 2¢ (Grok) or 10¢ (Gemini 2K) · full 3D asset 37¢ (7¢ image + 30¢ GLB) · rigged character walk/idle/attack ≈ 92¢.
 
 ## Output and logging
 

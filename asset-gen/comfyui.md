@@ -18,7 +18,7 @@ short-lived SSH tunnel to loopback-only ComfyUI and return the exact model in JS
 | General 2D, props, textures, instruction edits | [FLUX.2 Klein Base 4B](https://huggingface.co/black-forest-labs/FLUX.2-klein-base-4B) | PNG | Apache-2.0 | `comfyui_gen.py image --style production` |
 | Pixel sprites | [FLUX.2 Klein 4B](https://huggingface.co/black-forest-labs/FLUX.2-klein-4B) distilled + [pixel-art LoRA](https://huggingface.co/Limbicnation/pixel-art-lora) | PNG | Apache-2.0 | `comfyui_gen.py image --style pixel` |
 | Video, action footage, synchronized dialogue/SFX/music | [MiniMax H3 Base FL2VA](https://huggingface.co/MiniMaxAI/MiniMax-H3) | MP4, 24 fps + 32 kHz stereo | restricted H3 community license | `comfyui_gen.py video`; explicit acceptance required |
-| PBR image-to-3D | [Pixal3D](https://github.com/TencentARC/Pixal3D) | textured GLB | MIT project + DINOv3 custom runtime dependency | deployment target; third-party license review required |
+| PBR image-to-3D | [TRELLIS.2 4B](https://github.com/microsoft/TRELLIS.2) | textured GLB | MIT | `local3d_gen.py glb`; separate service, see `local3d.md` |
 | Skeleton and skin weights | [SkinTokens / TokenRig](https://github.com/VAST-AI-Research/SkinTokens) | rigged GLB | MIT project | deployment target; no animation clips |
 | Game sound effects | [MOSS-SoundEffect-v2.0](https://huggingface.co/OpenMOSS-Team/MOSS-SoundEffect-v2.0) | 48 kHz WAV, up to 30 s | Apache-2.0 | deployment target |
 | Dialogue and voice cloning | [MOSS-TTS Local v1.5](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Local-Transformer-v1.5) | 48 kHz stereo WAV | Apache-2.0 | deployment target |
@@ -125,18 +125,18 @@ selection, and transparency cleanup.
 
 ## 3D and audio deployment targets
 
-- Pixal3D: validate the low-VRAM path, PBR export, topology, and GLB engine import;
-  its TRELLIS.2 base targets at least 24 GB. Its WebP-enabled glTF export must be
-  tested in all three engines, and the DINOv3 runtime dependency needs separate
-  license approval.
+- TRELLIS.2: the image-to-3D route, deployed as its own HTTP service rather than a
+  ComfyUI workflow. `local3d.md` holds the service contract, presets, and gate.
+  [TripoSG](https://github.com/VAST-AI-Research/TripoSG) (MIT) is the lower-VRAM
+  geometry-only backstop when TRELLIS.2 OOMs or a mesh needs no texture.
 - SkinTokens: validate texture/scale transfer and engine bone naming. Its stated
-  minimum is 14 GB; use `--use_transfer` after Pixal3D to preserve texture and
+  minimum is 14 GB; use `--use_transfer` after TRELLIS.2 to preserve texture and
   scale. The selected articulation and skin-VAE checkpoints come from
   `VAST-AI/SkinTokens`; animation clips still require a separate source.
 - MOSS-SoundEffect/TTS: record peak VRAM, preserve sample-rate/channel metadata,
   and verify WAV import and looping. The separate flagship MOSS-TTS-v1.5 emits
   24 kHz audio; the selected Local-Transformer route emits 48 kHz stereo.
 
-Pixal3D, SkinTokens, MOSS-SoundEffect, and MOSS-TTS require incompatible Python,
+TRELLIS.2, SkinTokens, MOSS-SoundEffect, and MOSS-TTS require incompatible Python,
 Torch, and CUDA stacks. Deploy them as isolated environments or services rather
 than adding them to the ComfyUI environment.
