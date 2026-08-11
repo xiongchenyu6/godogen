@@ -26,6 +26,12 @@ prefix: the model, the five CUDA extensions it imports (`o_voxel`, `cumesh`,
 pinned Python environment. Port 8090 rather than the upstream 8080 — that one
 belongs to another service on this host.
 
+Workers load on demand: weights live in host RAM and move onto a card only
+around a generation, then move back after an idle timeout. So the cards stay
+free for ComfyUI while nothing is being generated, and `resident: false` in
+`doctor` output is the healthy idle state, not a fault. The first request after
+an idle period pays a few seconds of transfer; a burst pays it once.
+
 Two 24 GB cards are not one 48 GB card. TRELLIS.2 needs 24 GB, so a single card
 holds exactly one job — the second GPU doubles throughput, not per-asset speed.
 Each worker must run one Uvicorn process with no `--workers` flag, and must hold
@@ -86,11 +92,13 @@ mesh; the GLB is a starting asset, not a shipping one.
 
 ## Deployment notes
 
-The service shares the box with ComfyUI, which claims both cards and needs all
-24 GB for MiniMax H3. A TRELLIS.2 worker resident-loads its model and never
-gives the memory back, so running both at once is an OOM rather than a slowdown.
-That is why the service ships disabled: enabling it means either scheduling the
-two against each other or giving each one card.
+The service shares both cards with ComfyUI rather than reserving one. On-demand
+residency means the two only contend while both are actually generating; that
+case returns 507 with the card named, so retry once the other job finishes
+instead of lowering the preset.
+
+It ships disabled because enabling it makes `nixos-rebuild` compile CUDA torch
+and five extensions from source — an hours-long build, not a switch.
 
 The API carries no authentication. Keep it on the loopback behind the SSH tunnel;
 if it is ever bound to a routable address, it needs TLS and at least a bearer

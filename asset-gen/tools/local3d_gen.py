@@ -246,6 +246,9 @@ def cmd_doctor(args):
                         "gpu": health["gpu"],
                         "visible_devices": health.get("visible_devices"),
                         "allocated_mb": health.get("allocated_mb"),
+                        # Weights are only on the card around a generation, so
+                        # an idle worker reporting resident=false is healthy.
+                        "resident": health.get("resident"),
                     }
                 except Exception as e:
                     workers[port] = {"error": f"{type(e).__name__}: {e}"}
