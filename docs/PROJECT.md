@@ -39,16 +39,27 @@ The manifest states only this intent; everything about *how to show and capture*
 - **Bevy** — Rust, current stable Bevy resolved and pinned at build time, ECS scenes spawned `OnEnter`. The guide points the agent at the installed source for current APIs and gives the offscreen `RenderTarget::Image` capture recipe.
 - **Babylon.js** — TypeScript/Vite, served at a live URL. The guide covers the side-effect-import trap, Havok physics, and headless Chrome capture.
 
+## Asset Generation
+
+`asset-gen` selects the narrowest verified route for each asset instead of treating one backend as universal:
+
+- **Local 2D** — FLUX.2 Klein 4B Base handles production images and edits; the distilled 4B checkpoint plus a pixel-art LoRA handles sprites.
+- **Local video** — MiniMax H3 is available only when its license gate and live output check pass.
+- **Local image-to-3D** — TRELLIS.2 produces textured PBR GLBs through a separate NixOS service. Its weights stay in host RAM and move onto a free RTX 4090 only for generation, leaving both cards available to ComfyUI while idle.
+- **Cloud fallback** — Gemini and Grok cover image precision, iteration, and video when a local gate is closed. Tripo3D covers static GLBs and remains the only working route for rigged characters and retargeted animation clips.
+
+A reachable endpoint is not considered usable on its own. Each local route has a doctor check for service and model inventory, followed by a real output smoke test before the runtime may select it. Model licenses are part of the gate.
+
 ## What Makes This Different
 
 **Proof over claims.** A run is judged on the running game — a recorded clip or a live URL — not on code that compiles.
 
 **Trust the model.** The runtime ships no scaffold and no planner. The model recreates boilerplate from a short sketch and decomposes the work itself; the guides spend their words only on what it genuinely can't know.
 
-**Cost- and license-aware asset generation.** Permissive local models are preferred when the configured GPU backend is ready; restricted local weights stay opt-in, and Gemini, Grok, or Tripo3D cover precision and capabilities the verified local stack does not. The asset manifest in `README.md` tracks paths, in-game sizes, and paid costs so implementation doesn't lose them.
+**Cost- and license-aware asset generation.** Live-verified local routes are preferred, restricted weights stay gated, and cloud providers cover capabilities the local stack has not proven. The asset manifest in `README.md` tracks paths, in-game sizes, and paid costs so implementation doesn't lose them.
 
 **One source, many targets.** Engine and host agent are render-time choices over one source tree.
 
 ## Runtime Limitations
 
-The runtime does not yet ship a dedicated audio-asset pipeline or mobile/native packaging. Video backends may emit synchronized audio inside their clips.
+The runtime does not yet ship a working local rigging, sound-effect, or text-to-speech command, nor mobile/native packaging. SkinTokens and MOSS are deployment targets rather than selectable runtime routes. Video backends may emit synchronized audio inside their clips.
