@@ -8,7 +8,7 @@ so two assets generate concurrently; a single asset is not twice as fast.
 
 Subcommands:
   glb     image-to-3D, returns a textured PBR GLB
-  doctor  report whether the service answers and which GPU each worker holds
+  doctor  report service health and each worker's visible GPU
 
 Output: JSON to stdout {"ok": true, "path": "...", "cost_cents": 0, "backend": "trellis2"}.
 Progress goes to stderr — redirect it and read only on failure.
@@ -33,7 +33,7 @@ from pathlib import Path
 # loopback-only on the remote, so we reach it through an SSH tunnel.
 SSH_HOST = "root@101.78.126.6"
 # Nginx balances the workers; each worker also answers directly, which is the
-# only way to prove that they hold different GPUs. Ports match
+# only way to verify their distinct GPU mappings. Ports match
 # services.trellis2 on the box — 8080 there belongs to the voice gateway.
 REMOTE_API_PORT = 8090
 REMOTE_WORKER_PORT_BASE = 8091
@@ -290,7 +290,7 @@ def main():
     glb_parser.set_defaults(func=cmd_glb)
 
     doctor_parser = sub.add_parser(
-        "doctor", help="check the service and that each worker holds its own GPU")
+        "doctor", help="check service health and each worker's visible GPU")
     doctor_parser.add_argument("--workers", type=int, default=2,
                                help="expected worker count, one per GPU")
     doctor_parser.set_defaults(func=cmd_doctor)
