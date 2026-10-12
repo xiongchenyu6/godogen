@@ -22,6 +22,8 @@ Read each stage file from `${GODOGEN_SKILL_DIR}/` only when you reach that stage
 | `scaffold.md` | Architecture + skeleton | After decomposition |
 | `asset-planner.md` | Budget and plan assets | If budget provided |
 | `asset-gen.md` | Asset generation CLI ref | When generating assets |
+| `comfyui.md` | Free local asset gen (GPU box: images/sprites/video/3D) | Generating assets, avoid spend |
+| `lingji-forge.md` | Free HTTP asset backend (CN/EN briefs, consistent action packs, pixel model, GLB) | Characters, action sprite sets, pixel art |
 | `rembg.md` | Background removal | Only when an asset needs transparency removed |
 | `task-execution.md` | Task workflow + commands | Before first task |
 | `quirks.md` | Bevy gotchas | Before writing code |

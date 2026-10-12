@@ -2,6 +2,14 @@
 
 Generate PNG images (Gemini or xAI Grok) and GLB 3D models (Tripo3D) from text prompts.
 
+**Free alternatives:** a self-hosted GPU box (2× RTX 4090) serves images/sprites/video
+and untextured 3D meshes at zero per-asset cost, via two routes — the raw ComfyUI tunnel
+(`${GODOGEN_SKILL_DIR}/comfyui.md`) and the **Lingji Forge HTTP API**
+(`${GODOGEN_SKILL_DIR}/lingji-forge.md`: prompt planning for CN/EN briefs, one-sentence
+identity-consistent action packs, a real pixel-art model, engine-ready ZIPs). Prefer the free
+routes to iterate or avoid spend; use the paid backends below when you need their specific
+strengths (Gemini precision, Tripo3D textured/rigged 3D).
+
 ## Models
 
 | Model | Flag | Cost | Best for |
