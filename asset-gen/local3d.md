@@ -2,7 +2,7 @@
 
 [TRELLIS.2](https://github.com/microsoft/TRELLIS.2) (MIT, `microsoft/TRELLIS.2-4B`)
 is the local PBR image-to-3D line. It is a **deployment target** — the service is
-declared but not switched on. Until `doctor` passes, 3D goes to Tripo3D in
+declared but not switched on. Until `doctor` passes, 3D goes through the Tripo CLI described in
 `SKILL.md`.
 
 It supersedes Pixal3D as the local 3D route: Pixal3D wraps this same TRELLIS.2

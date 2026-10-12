@@ -14,7 +14,7 @@ Output: JSON to stdout {"ok": true, "path": "...", "cost_cents": 0, "backend": "
 Progress goes to stderr — redirect it and read only on failure.
 
 This route produces geometry and PBR textures, never a skeleton or animation
-clips. Rigged and retargeted characters stay on Tripo3D in asset_gen.py. See
+clips. Rigged and retargeted characters use the Tripo CLI. See
 local3d.md for the service contract, the gate, and post-processing.
 """
 import argparse
