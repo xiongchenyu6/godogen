@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Free local image and video generation via the self-hosted ComfyUI box.
 
-Talks to a ComfyUI server reachable only on the remote host's
-loopback, by opening a short-lived SSH local-forward to it. No API keys, no
-per-generation charge — the box has 2x RTX 4090.
+Uses the public HTTPS ComfyUI API with a program Bearer key. Browser access
+uses Casdoor SSO separately. There is no per-generation API charge.
 
 Subcommands:
   image   text2img or instruction edit (FLUX.2 Klein 4B production/pixel)
@@ -13,28 +12,21 @@ Subcommands:
 Output: JSON to stdout {"ok": true, "path": "...", "cost_cents": 0, "backend": "comfyui"}.
 Progress goes to stderr — redirect it and read only on failure.
 
-The paid cloud backends (Gemini/Grok/Tripo3D) live in asset_gen.py. Use this
+Paid image/video backends live in asset_gen.py; cloud 3D uses the Tripo CLI. Use this
 when the asset is cheap to iterate on and exact prompt adherence isn't critical,
 or to avoid spend. See comfyui.md for model licenses and the full capability map.
 """
 import argparse
 import json
 import math
-import socket
-import subprocess
 import sys
-import tempfile
 import time
 import urllib.error
 import urllib.parse
-import urllib.request
 import uuid
 from pathlib import Path
 
-# Self-hosted ComfyUI box (sg-office, 2x RTX 4090). API is loopback-only on the
-# remote, so we reach it through an SSH tunnel.
-SSH_HOST = "root@101.78.126.6"
-REMOTE_API_PORT = 8188
+from comfyui_client import Backend
 
 IMAGE_PROFILES = {
     "production": {
@@ -100,56 +92,6 @@ def result_json(ok, path=None, error=None, **extra):
     sys.exit(0 if ok else 1)
 
 
-def _free_local_port():
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind(("127.0.0.1", 0))
-    port = s.getsockname()[1]
-    s.close()
-    return port
-
-
-class Tunnel:
-    """SSH local-forward to the remote ComfyUI loopback port."""
-
-    def __init__(self):
-        self.local_port = _free_local_port()
-        self.ctl = Path(tempfile.gettempdir()) / f"comfy-tunnel-{uuid.uuid4().hex}.sock"
-
-    @property
-    def base(self):
-        return f"http://127.0.0.1:{self.local_port}"
-
-    def __enter__(self):
-        log(f"[comfyui] opening tunnel -> {SSH_HOST}:{REMOTE_API_PORT}")
-        subprocess.run(
-            ["ssh", "-fN", "-M", "-S", str(self.ctl),
-             "-o", "BatchMode=yes", "-o", "ConnectTimeout=10",
-             "-o", "ServerAliveInterval=5", "-o", "ServerAliveCountMax=1",
-             "-o", "ExitOnForwardFailure=yes",
-             "-L", f"{self.local_port}:127.0.0.1:{REMOTE_API_PORT}", SSH_HOST],
-            check=True, timeout=20,
-        )
-        for _ in range(30):
-            try:
-                urllib.request.urlopen(self.base + "/system_stats", timeout=2)
-                return self
-            except Exception:
-                time.sleep(0.5)
-        self.__exit__(None, None, None)
-        raise RuntimeError("ComfyUI tunnel did not become ready")
-
-    def __exit__(self, *exc):
-        try:
-            subprocess.run(
-                ["ssh", "-o", "ConnectTimeout=5", "-S", str(self.ctl),
-                 "-O", "exit", SSH_HOST],
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                timeout=10,
-            )
-        except subprocess.TimeoutExpired:
-            log("[comfyui] timed out while closing the SSH tunnel")
-
-
 def _http_error(method, url, error):
     try:
         detail = error.read().decode(errors="replace")
@@ -163,17 +105,15 @@ def _http_error(method, url, error):
 
 def _get_json(base, path, timeout=30):
     try:
-        return json.load(urllib.request.urlopen(base + path, timeout=timeout))
+        return json.load(base.open(path, timeout=timeout))
     except urllib.error.HTTPError as e:
         raise _http_error("GET", path, e) from e
 
 
 def _post_json(base, path, payload):
-    req = urllib.request.Request(
-        base + path, data=json.dumps(payload).encode(),
-        headers={"Content-Type": "application/json"})
     try:
-        return json.load(urllib.request.urlopen(req, timeout=60))
+        return json.load(base.open(path, data=json.dumps(payload).encode(),
+                                   headers={"Content-Type": "application/json"}, timeout=60))
     except urllib.error.HTTPError as e:
         raise _http_error("POST", path, e) from e
 
@@ -193,10 +133,8 @@ def _upload_image(base, image_path):
         b'Content-Disposition: form-data; name="overwrite"\r\n\r\ntrue\r\n',
         f"--{boundary}--\r\n".encode(),
     ])
-    req = urllib.request.Request(
-        base + "/upload/image", data=body,
-        headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})
-    r = json.load(urllib.request.urlopen(req, timeout=300))
+    r = json.load(base.open("/upload/image", data=body,
+                            headers={"Content-Type": f"multipart/form-data; boundary={boundary}"}, timeout=300))
     name = r["name"]
     if r.get("subfolder"):
         name = f"{r['subfolder']}/{name}"
@@ -223,7 +161,7 @@ def _fetch(base, img):
     q = urllib.parse.urlencode(
         {"filename": img["filename"], "subfolder": img.get("subfolder", ""),
          "type": img["type"]})
-    return urllib.request.urlopen(base + "/view?" + q, timeout=300).read()
+    return base.open("/view?" + q, timeout=300).read()
 
 
 def _basename(name):
@@ -542,13 +480,13 @@ def cmd_image(args):
             raise ValueError("--megapixels must be between 0.01 and 16")
         if args.image and not config["supports_edit"]:
             raise ValueError("--style pixel is text-to-image only")
-        with Tunnel() as tunnel:
+        with Backend() as backend:
             mode = "edit" if args.image else "text"
             profile = _require_image_profile(
-                Inventory(tunnel.base), args.style, mode)
+                Inventory(backend), args.style, mode)
             log(f"[comfyui] image model={profile['name']} style={args.style}")
             if args.image:
-                server_image = _upload_image(tunnel.base, args.image)
+                server_image = _upload_image(backend, args.image)
                 workflow = build_flux2_edit(
                     args.prompt, args.negative, server_image, args.seed,
                     steps, guidance, args.megapixels, profile)
@@ -560,8 +498,8 @@ def cmd_image(args):
                 workflow = build_flux2_text2img(
                     args.prompt, args.negative, width, height,
                     args.seed, steps, guidance, profile)
-            media = _submit_and_wait(tunnel.base, workflow, timeout=args.timeout)
-            output.write_bytes(_fetch(tunnel.base, media))
+            media = _submit_and_wait(backend, workflow, timeout=args.timeout)
+            output.write_bytes(_fetch(backend, media))
     except Exception as e:
         result_json(False, error=f"{type(e).__name__}: {e}",
                     model=config["name"], style=args.style)
@@ -586,20 +524,20 @@ def cmd_video(args):
             raise ValueError("--timeout must be positive")
         width, height = _video_canvas(args)
         frame_count = _h3_frame_count(args.duration)
-        with Tunnel() as tunnel:
-            profile, missing = _h3_status(Inventory(tunnel.base))
+        with Backend() as backend:
+            profile, missing = _h3_status(Inventory(backend))
             if missing:
                 raise RuntimeError("MiniMax H3 stack is not ready: " + "; ".join(missing))
-            first_image = _upload_image(tunnel.base, args.image) if args.image else None
-            last_image = _upload_image(tunnel.base, args.last_image) if args.last_image else None
+            first_image = _upload_image(backend, args.image) if args.image else None
+            last_image = _upload_image(backend, args.last_image) if args.last_image else None
             actual_duration = frame_count / 24
             log(f"[comfyui] MiniMax H3 {width}x{height}, {frame_count} frames "
                 f"({actual_duration:.3f}s), native stereo audio")
             workflow = build_h3_video(
                 args.prompt, width, height, frame_count, args.seed, args.steps,
                 profile, first_image, last_image)
-            media = _submit_and_wait(tunnel.base, workflow, timeout=args.timeout)
-            output.write_bytes(_fetch(tunnel.base, media))
+            media = _submit_and_wait(backend, workflow, timeout=args.timeout)
+            output.write_bytes(_fetch(backend, media))
     except Exception as e:
         result_json(False, error=f"{type(e).__name__}: {e}", model=H3_MODEL)
     result_json(True, path=str(output), model=H3_MODEL,
@@ -609,8 +547,8 @@ def cmd_video(args):
 
 def cmd_doctor(args):
     try:
-        with Tunnel() as tunnel:
-            inventory = Inventory(tunnel.base)
+        with Backend() as backend:
+            inventory = Inventory(backend)
             images = {}
             for style, config in IMAGE_PROFILES.items():
                 _resolved, text_missing = _image_status(inventory, style, "text")
@@ -633,7 +571,7 @@ def cmd_doctor(args):
                 }
             _resolved, missing = _h3_status(inventory)
             h3 = {"inventory_complete": not missing, "missing": missing}
-            stats = _get_json(tunnel.base, "/system_stats")
+            stats = _get_json(backend, "/system_stats")
     except Exception as e:
         result_json(False, error=f"{type(e).__name__}: {e}")
     if args.capability == "backend":

@@ -1,15 +1,20 @@
 # Latest-Only Local Game-Asset Models
 
 The self-hosted stack carries one current model line per asset capability. Model
-selection never falls back to an older checkpoint. Repository CLIs open a
-short-lived SSH tunnel to loopback-only ComfyUI and return the exact model in JSON.
+selection never falls back to an older checkpoint. Repository CLIs use the
+HTTPS API with a program Bearer credential and return the exact model in JSON.
 
 ## GPU box
 
 - Host `root@101.78.126.6` (`sg-office`, NixOS), 2× RTX 4090 24 GB, 128 GB RAM.
 - ComfyUI is bound to `127.0.0.1:8188`.
-- UI tunnel: `ssh -L 8188:127.0.0.1:8188 root@101.78.126.6`, then open
-  `http://127.0.0.1:8188`.
+- Browser: `https://comfy.panda.qzz.io/`, authenticated with Casdoor SSO.
+- CLI: set `COMFYUI_API_KEY`, or `COMFYUI_API_KEY_FILE` to a mode-0600 file.
+  The default file is `~/.config/godogen/comfyui-api-key`; `COMFYUI_BASE_URL`
+  defaults to the browser hostname. An API key is separate from an SSO password.
+- API reads, job submissions, uploads, history polling and result downloads all
+  carry the program credential. Redirects are rejected rather than following SSO.
+
 
 ## Model set
 
@@ -23,7 +28,7 @@ short-lived SSH tunnel to loopback-only ComfyUI and return the exact model in JS
 | Game sound effects | [MOSS-SoundEffect-v2.0](https://huggingface.co/OpenMOSS-Team/MOSS-SoundEffect-v2.0) | 48 kHz WAV, up to 30 s | Apache-2.0 | deployment target |
 | Dialogue and voice cloning | [MOSS-TTS Local v1.5](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Local-Transformer-v1.5) | 48 kHz stereo WAV | Apache-2.0 | deployment target |
 
-Gemini, Grok, and Tripo3D in `SKILL.md` remain the cloud routes while a local
+Gemini, Grok, and the Tripo CLI in `SKILL.md` remain the cloud routes while a local
 capability is not live-verified.
 
 ## Inventory gate

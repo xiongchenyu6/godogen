@@ -82,7 +82,7 @@ else took the card.
 ## What this route does not produce
 
 No skeleton, no skin weights, no animation clips. Rigged and retargeted
-characters stay on Tripo3D (`asset_gen.py rig` / `retarget`); SkinTokens remains
+characters stay on the Tripo CLI; SkinTokens remains
 a rigging deployment target in `comfyui.md`.
 
 Decimated AI topology is not animation topology. Before binding a character,

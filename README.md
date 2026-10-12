@@ -26,7 +26,7 @@ Engine and host agent (Claude vs Codex) are publish-time render choices, not sep
 - **Godot 4** — C#/.NET projects with build-time scene generation, runtime scripts, and Jolt physics.
 - **Bevy** — Rust/Bevy projects with code-first ECS scenes and offscreen capture.
 - **Babylon.js** — TypeScript/Vite browser games served at a live URL.
-- **Asset generation** — the latest-only local set uses FLUX.2 Klein 4B Base for images/edits, distilled 4B plus a pixel LoRA for sprites, and license-gated MiniMax H3 for video. TRELLIS.2 serves local image-to-3D as a GLB; SkinTokens and MOSS are the rigging, SFX, and TTS deployment targets. Gemini, Grok, and Tripo3D remain the cloud routes while a local capability is not live-verified, and Tripo3D is the only route to a rigged, animated character.
+- **Asset generation** — the latest-only local set uses FLUX.2 Klein 4B Base for images/edits, Base 4B plus a pixel LoRA for sprites, and license-gated MiniMax H3 for video. TRELLIS.2 serves local image-to-3D as a GLB; SkinTokens and MOSS are the rigging, SFX, and TTS deployment targets. Gemini, Grok, and Tripo CLI remain the cloud routes while a local capability is not live-verified, and Tripo CLI is the route to a rigged, animated character.
 - **Proof over claims** — the agent judges results from the running game (a live URL or a recorded clip), not from a clean compile, so visible defects drive the next iteration.
 - **You choose your involvement** — watch the live game (a Babylon.js URL, or a Godot/Bevy project you run) and steer at decision points, or leave the run unattended and get a 15–20s proof recording at the end. The agent takes its cue from how you frame the task.
 
@@ -36,14 +36,15 @@ Engine and host agent (Claude vs Codex) are publish-time render choices, not sep
 
 - [Godot 4](https://godotengine.org/download/) (.NET build) on `PATH` for Godot projects
 - Rust/Cargo for Bevy projects
-- Node.js 22.12+ and npm for Babylon.js projects
+- Node.js 20+ and npm (22.12+ for Babylon.js projects), plus the Tripo CLI: `npm install -g tripo-cli`
 - Chrome or Chromium with hardware WebGL2 for Babylon.js browser capture
 - Python 3 with pip
 - API keys as environment variables:
   - `GOOGLE_API_KEY` — [Google AI Studio](https://aistudio.google.com/) for Gemini image generation
-  - `XAI_API_KEY` — [xAI Grok](https://console.x.ai/home) for image/video generation
-  - `TRIPO3D_API_KEY` — [Tripo3D](https://platform.tripo3d.ai/) for 3D generation
-- SSH access to the configured GPU box for optional local generation; `asset-gen/comfyui.md` and `asset-gen/local3d.md` record live-stack checks and model-license boundaries
+  - `XAI_API_KEY` — [xAI Grok](https://console.x.ai/home) for image generation and animated-sprite video (either image key is enough)
+  - `TRIPO_API_KEY` — [Tripo](https://developers.tripo3d.ai/) for 3D generation (used by the `tripo` CLI)
+  - `COMFYUI_API_KEY` or `COMFYUI_API_KEY_FILE` — authenticated self-hosted ComfyUI
+- SSH access is needed only for the TRELLIS.2 route; see `asset-gen/local3d.md`
 - System packages from [setup.md](setup.md): `vulkan-tools`, `xvfb`, `ffmpeg`, `imagemagick`, plus platform-specific extras
 - Tested on Ubuntu, Debian, and macOS
 - Claude Code or Codex

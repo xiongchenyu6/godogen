@@ -42,6 +42,7 @@ GLB models: instantiate the `PackedScene`, measure the `MeshInstance3D` AABB to 
 
 Most Godot behavior the model already knows; these few fail with no error:
 
+- **On macOS a fatal error hangs instead of exiting.** Godot reports it in an `NSAlert` modal that `--headless` can't dismiss, so the process idles at 0% CPU forever (a missing main scene does it too). Run every `godot` call under `timeout`; exit 124 is the failure. Output ending at `.NET: Initializing module...` means `GodotSharp/` wasn't found — `godot` on `PATH` is a symlink rather than a wrapper script.
 - **`ArrayMesh.GenerateNormals()`** is required for a procedural mesh to *receive* shadows. Without it (or with `CullMode.Disabled` as a "safety net"), shadows silently vanish — fix winding instead.
 - **MultiMeshInstance3D + GLB** loses the mesh on pack/save; use individual instances. `MaterialOverride` on GLB-internal nodes also won't serialize (owner is skipped) — use a procedural `ArrayMesh` when a custom material is needed.
 - **Raycasts don't reliably hit `ConcavePolygonShape3D`** (trimesh) — use a shape query or sample terrain height analytically.
@@ -51,7 +52,7 @@ Most Godot behavior the model already knows; these few fail with no error:
 
 ## Capture (proof video)
 
-Hardware **Vulkan** gives correct rendering and is required for video; software Vulkan (`llvmpipe`/`lavapipe`) can still do stills but skip video and report it.
+Hardware **Vulkan** (Metal on macOS) gives correct rendering and is required for video; software Vulkan (`llvmpipe`/`lavapipe`) can still do stills but skip video and report it. macOS has no `xvfb`, so capture runs in a real window there — adding `--headless` to `--write-movie` aborts (`Parameter "t" is null`).
 
 Capture deterministically with Godot's movie writer from a dedicated capture `SceneTree` script under `test/`:
 
